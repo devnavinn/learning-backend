@@ -9,13 +9,17 @@ const app = require('./app');
 
 
 
-
-mongoose.connect(process.env.DATABASE, {
+const DB = process.env.DATABASE;
+console.log('database uri', DB);
+mongoose.connect(DB, {
     useNewUrlParser: true,
     useCreateIndex: true,
-    useFindAndModify: false
+    useFindAndModify: false,
+    useUnifiedTopology: true
 }).then(() => {
     console.log('DB connection successful!');
+}).catch(err => {
+    console.log(err);
 })
 
 // Listen
