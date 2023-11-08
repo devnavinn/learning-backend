@@ -10,7 +10,6 @@ const app = require('./app');
 
 
 const DB = process.env.DATABASE;
-console.log('database uri', DB);
 mongoose.connect(DB, {
     useNewUrlParser: true,
     useCreateIndex: true,

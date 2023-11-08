@@ -2,7 +2,7 @@
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 const mongoose = require('mongoose');
-const validator = require('validator');
+// const validator = require('validator');
 const slugify = require('slugify');
 
 const tourSchema = new mongoose.Schema({
