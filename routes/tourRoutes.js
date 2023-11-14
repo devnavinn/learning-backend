@@ -12,6 +12,6 @@ router.route('/top-5-cheap').get(tourController.aliasTopTours, tourController.ge
 
 router.route('/').get(authController.protect, tourController.getTours).post(tourController.createTour)
 
-router.route('/:id').get(tourController.getTour).patch(tourController.updateTour).delete(tourController.deleteTour)
+router.route('/:id').get(authController.protect, tourController.getTour).patch(tourController.updateTour).delete(tourController.deleteTour)
 
 module.exports = router;
