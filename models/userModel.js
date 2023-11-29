@@ -56,6 +56,17 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre('save', async function (next) {
     // Only run this function if password was actually modified
+    if (!this.isModified('password') || this.isNew) return next();
+
+    // Hash the password with cost of 12
+    this.passwordChangedAt = new Date() - 1000;
+    // Delete passwordConfirm field
+    this.passwordConfirm = undefined;
+    next()
+})
+
+userSchema.pre('save', async function (next) {
+    // Only run this function if password was actually modified
     if (!this.isModified('password')) return next();
 
     // Hash the password with cost of 12
@@ -82,8 +93,8 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
 userSchema.methods.createPasswordResetToken = function () {
     const resetToken = crypto.randomBytes(32).toString('hex');
 
-    // this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    this.passwordResetToken = resetToken;
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
     this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     return resetToken;
