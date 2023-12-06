@@ -1,6 +1,11 @@
+/* eslint-disable import/no-extraneous-dependencies */
 const express = require('express');
-
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xssClean = require('xss-clean');
+const hpp = require('hpp')
 
 const AppError = require('./utils/appError')
 const globalErrorHandler = require('./controllers/errorController')
@@ -9,16 +14,52 @@ const userRouter = require('./routes/userRoutes')
 
 const app = express()
 
-//middleware
+//global middleware
+
+// Set security HTTP headers
+app.use(helmet())
+
+// Development logging
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'))
 }
 
-app.use(express.json());
-// This middleware parses JSON request bodies
-app.use(express.urlencoded({ extended: true }));
-// This middleware parses URL-encoded request bodies
+// Limit requests from same API
+const limiter = rateLimit({
+    max: 300,
+    windowMs: 60 * 60 * 1000,
+    message: 'Too many request from this IP, please try again in an hour'
+})
 
+app.use('/api', limiter)
+
+// This middleware parses JSON request bodies
+app.use(express.json({ limit: '10kb' }));
+
+// Data sanitization against NoSQL query injection
+app.use(mongoSanitize())
+
+// Data sanitization against XSS
+app.use(xssClean())
+
+// Prevent parameter pollution
+app.use(hpp(
+    {
+        whitelist: [
+            'duration',
+            'ratingsQuantity',
+            'ratingsAverage',
+            'maxGroupSize',
+            'difficulty',
+            'price'
+        ]
+    }
+))
+
+// This middleware parses URL-encoded request bodies
+app.use(express.urlencoded({ extended: true }));
+
+// Serving static files
 app.use(express.static(`${__dirname}/public`))
 
 app.use((req, res, next) => {
