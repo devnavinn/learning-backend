@@ -7,6 +7,7 @@ const AppError = require('./../utils/appError');
 const SendEmail = require('./../utils/email');
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
+const exp = require('constants');
 
 const signToken = id => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -44,8 +45,72 @@ exports.signup = catchAsync(async (req, res, next) => {
         passwordConfirm: passwordConfirm,
         role: role
     });
-    createSendToken(newUser, 201, res);
+    const verifyToken = newUser.createEmailVerifyToken()
+    await newUser.save({ validateBeforeSave: false })
+    newUser.verificationToken = undefined;
+    newUser.verificationExpires = undefined;
+    const verifyURL = `${req.protocol}://${req.get('host')}/api/v1/users/verifyEmail/${verifyToken}`
 
+    const html = `
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Email Verification</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; margin: 0; padding: 0;">
+    
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <!-- Header -->
+        <tr>
+          <td bgcolor="#f7f7f7" style="padding: 20px 0; text-align: center;">
+            <h1 style="color: #333333;">Email Verification</h1>
+          </td>
+        </tr>
+        <!-- Email Content -->
+        <tr>
+          <td style="padding: 20px;">
+            <p style="font-size: 16px; line-height: 1.6; color: #666666;">
+              Verify your email address by clicking the link below:
+            </p>
+            <!-- Verify Button -->
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td style="border-radius: 3px; background: #007bff; text-align: center;">
+                  <a href="${verifyURL}" target="_blank" style="font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: inline-block; padding: 12px 24px;">Verify Email</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td bgcolor="#f7f7f7" style="padding: 20px; text-align: center;">
+            <p style="font-size: 12px; color: #999999;">This is an automated message. Please do not reply.</p>
+          </td>
+        </tr>
+      </table>
+    
+    </body>
+    </html>`;
+
+
+    try {
+        await SendEmail({
+            email: newUser.email,
+            subject: 'Verify your email address',
+            html
+        })
+        res.status(200).json({
+            status: 'success',
+            message: 'A verification email has been sent to your email address.'
+        })
+
+    } catch (err) {
+        newUser.verificationToken = undefined;
+        await newUser.save({ validateBeforeSave: false })
+        return next(new AppError('There was an error sending the email. Try again later!'), 500)
+    }
+    // createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -106,6 +171,96 @@ exports.restrictTo = (...roles) => {
         next();
     }
 }
+
+exports.verifyEmail = catchAsync(async (req, res, next) => {
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const user = await User.findOne({ verificationToken: hashedToken, verificationExpires: { $gt: Date.now() } })
+
+    if (!user) {
+        return next(new AppError('Token is invalid or has expired', 400))
+    }
+
+    user.verificationToken = undefined;
+    user.verificationExpires = undefined;
+    user.verificationStatus = 'verified';
+    await user.save({ validateBeforeSave: false })
+    user.verificationStatus = undefined;
+    createSendToken(user, 200, res);
+
+})
+
+exports.resendVerifyEmail = catchAsync(async (req, res, next) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email })
+    if (!user) {
+        return next(new AppError('There is no user with email address.', 404))
+    }
+    const verifyToken = user.createEmailVerifyToken()
+    await user.save({ validateBeforeSave: false })
+    user.verificationToken = undefined;
+    user.verificationExpires = undefined;
+    const verifyURL = `${req.protocol}://${req.get('host')}/api/v1/users/verifyEmail/${verifyToken}`
+    const html = `
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Email Verification</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; margin: 0; padding: 0;">
+    
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <!-- Header -->
+        <tr>
+          <td bgcolor="#f7f7f7" style="padding: 20px 0; text-align: center;">
+            <h1 style="color: #333333;">Email Verification</h1>
+          </td>
+        </tr>
+        <!-- Email Content -->
+        <tr>
+          <td style="padding: 20px;">
+            <p style="font-size: 16px; line-height: 1.6; color: #666666;">
+              Verify your email address by clicking the link below:
+            </p>
+            <!-- Verify Button -->
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td style="border-radius: 3px; background: #007bff; text-align: center;">
+                  <a href="${verifyURL}" target="_blank" style="font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: inline-block; padding: 12px 24px;">Verify Email</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td bgcolor="#f7f7f7" style="padding: 20px; text-align: center;">
+            <p style="font-size: 12px; color: #999999;">This is an automated message. Please do not reply.</p>
+          </td>
+        </tr>
+      </table>
+    
+    </body>
+    </html>`;
+    try {
+        await SendEmail({
+            email: user.email,
+            subject: 'Verify your email address',
+            html
+        })
+        res.status(200).json({
+            status: 'success',
+            message: 'A verification email has been sent to your email address.'
+        })
+
+    } catch (err) {
+        user.verificationToken = undefined;
+        user.verificationExpires = undefined;
+        await user.save({ validateBeforeSave: false })
+        return next(new AppError('There was an error sending the email. Try again later!'), 500)
+    }
+
+})
+
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
     // 1) Get user based on POSTed email
