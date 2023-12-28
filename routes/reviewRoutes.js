@@ -1,12 +1,20 @@
 const express = require('express');
-
-const router = express.Router()
-
 const authController = require('./../controllers/authController');
-
 const { createReview, getReviews } = require('../controllers/reviewController')
 
-router.route('/').post(authController.protect, authController.restrictTo('user'), createReview).get(getReviews)
+const router = express.Router({ mergeParams: true })
+
+// Post /tour/73434347/reviews
+// /reviews
+
+router
+    .route('/')
+    .post(
+        authController.protect,
+        authController.restrictTo('user'),
+        createReview
+    )
+    .get(getReviews)
 
 
 
