@@ -9,12 +9,12 @@ const router = express.Router({ mergeParams: true })
 
 router
     .route('/')
+    .get(getReviews)
     .post(
         authController.protect,
         authController.restrictTo('user'),
         createReview
     )
-    .get(getReviews)
 
 
 
