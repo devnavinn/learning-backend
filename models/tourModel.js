@@ -123,7 +123,7 @@ tourSchema.virtual('durationWeeks').get(function () {
 tourSchema.virtual('reviews', {
     ref: "Review",
     foreignField: 'tour',
-    localField: '_id'
+    localField: '_id',
 })
 
 //Document middleware : run before .save() and .create() 
