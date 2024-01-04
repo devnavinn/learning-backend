@@ -3,6 +3,7 @@ const AppError = require('./../utils/appError');
 // const APIFeatures = require('./../utils/apiFeatures');
 
 const catchAsync = require('./../utils/catchAsync');
+const factory = require('./handlerFactory')
 
 const filterObj = (obj, ...allowedFields) => {
     const newObj = {}
@@ -36,7 +37,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     }
 
     // 2) update user document
-    // Filtered out unwanted field names that are not allowed to be updated
+    // Filter{{URL}}api/v1/reviews/658c18898deb31d6fa4b1e35ed out unwanted field names that are not allowed to be updated
     const filteredBody = filterObj(req.body, 'name', 'email');
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -64,6 +65,8 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
         data: null
     })
 })
+
+exports.deleteUser = factory.deleteOne(User)
 
 exports.checkBody = (req, res, next) => {
     if (!req.body.name || !req.body.email) {

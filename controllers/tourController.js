@@ -4,6 +4,8 @@ const APIFeatures = require('./../utils/apiFeatures');
 const cloudinary = require('./../utils/cloudnary')
 const catchAsync = require('./../utils/catchAsync');
 
+const factory = require('./handlerFactory')
+
 exports.aliasTopTours = (req, res, next) => {
     req.query.limit = '5';
     req.query.sort = '-ratingsAverage,price';
@@ -67,23 +69,8 @@ exports.updateTour = catchAsync(async (req, res, next) => {
     })
 
 })
-exports.deleteTour = catchAsync(async (req, res, next) => {
 
-    const { id } = req.params;
-    const tour = await Tour.findByIdAndDelete(id);
-
-    if (!tour) {
-        return next(new AppError('No tour found with that ID', 404))
-    }
-
-    // If the tour was successfully deleted, respond with a 204 status and a success message.
-    res.status(204).json({
-        status: 'success',
-        message: 'Deleted successfully'
-    });
-
-});
-
+exports.deleteTour = factory.deleteOne(Tour)
 
 
 exports.createTour = catchAsync(async (req, res, next) => {

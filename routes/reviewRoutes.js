@@ -1,6 +1,6 @@
 const express = require('express');
 const authController = require('./../controllers/authController');
-const { createReview, getReviews } = require('../controllers/reviewController')
+const { createReview, getReviews, deleteReview } = require('../controllers/reviewController')
 
 const router = express.Router({ mergeParams: true })
 
@@ -16,6 +16,6 @@ router
         createReview
     )
 
-
+router.route('/:id').delete(deleteReview)
 
 module.exports = router;
