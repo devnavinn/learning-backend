@@ -7,3 +7,14 @@ cloudinary.config({
 });
 
 module.exports = cloudinary;
+
+// const tourData = req.body;
+// let uploadResponse;
+// if (tourData.imageCover && tourData.imageCover.startsWith('data:image/')) {
+//     uploadResponse = await cloudinary.uploader.upload(tourData.imageCover, {
+//         upload_preset: "natours-tours"
+//     })
+
+//     tourData.imageCover = uploadResponse.secure_url
+//     tourData.imageCover_public_id = uploadResponse.public_id
+// }

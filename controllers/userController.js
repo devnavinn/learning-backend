@@ -65,6 +65,8 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
         data: null
     })
 })
+// don not update user password with this
+exports.updateUser = factory.updateOne(User)
 
 exports.deleteUser = factory.deleteOne(User)
 

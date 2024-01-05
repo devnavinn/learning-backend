@@ -1,6 +1,6 @@
 const express = require('express');
 const authController = require('./../controllers/authController');
-const { createReview, getReviews, deleteReview } = require('../controllers/reviewController')
+const { createReview, getReviews, deleteReview, updateReview, setTourUserIds } = require('../controllers/reviewController')
 
 const router = express.Router({ mergeParams: true })
 
@@ -13,9 +13,12 @@ router
     .post(
         authController.protect,
         authController.restrictTo('user'),
+        setTourUserIds,
         createReview
     )
 
-router.route('/:id').delete(deleteReview)
+router.route('/:id')
+    .patch(updateReview)
+    .delete(deleteReview)
 
 module.exports = router;

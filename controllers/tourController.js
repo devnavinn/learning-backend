@@ -1,7 +1,7 @@
 const Tour = require('./../models/tourModel');
 const AppError = require('./../utils/appError');
 const APIFeatures = require('./../utils/apiFeatures');
-const cloudinary = require('./../utils/cloudnary')
+// const cloudinary = require('./../utils/cloudnary')
 const catchAsync = require('./../utils/catchAsync');
 
 const factory = require('./handlerFactory')
@@ -48,57 +48,11 @@ exports.getTour = catchAsync(async (req, res, next) => {
         }
     })
 })
-
-exports.updateTour = catchAsync(async (req, res, next) => {
-
-    const { id } = req.params
-    const tour = await Tour.findByIdAndUpdate(id, req.body, {
-        new: true,
-        runValidators: true
-    })
-
-    if (!tour) {
-        return next(new AppError('No tour found with that ID', 404))
-    }
-
-    res.status(200).json({
-        status: 'success',
-        data: {
-            tour: tour
-        }
-    })
-
-})
-
+exports.updateTour = factory.updateOne(Tour)
 exports.deleteTour = factory.deleteOne(Tour)
 
 
-exports.createTour = catchAsync(async (req, res, next) => {
-    // const newTour = new Tour({})
-    // newTour.save()
-    // Example of uploading an image to Cloudinary
-    const tourData = req.body;
-    let uploadResponse;
-    if (tourData.imageCover && tourData.imageCover.startsWith('data:image/')) {
-        uploadResponse = await cloudinary.uploader.upload(tourData.imageCover, {
-            upload_preset: "natours-tours"
-        })
-
-        tourData.imageCover = uploadResponse.secure_url
-        tourData.imageCover_public_id = uploadResponse.public_id
-    }
-
-
-    const newTour = await Tour.create(tourData)
-
-    res.status(201).json({
-        status: 'success',
-        data: {
-            tour: newTour
-        }
-    })
-
-});
+exports.createTour = factory.CreateOne(Tour)
 
 exports.getTourStats = catchAsync(async (req, res, next) => {
 
