@@ -1,6 +1,6 @@
 const express = require('express');
 const authController = require('./../controllers/authController');
-const { createReview, getReviews, deleteReview, updateReview, setTourUserIds } = require('../controllers/reviewController')
+const { createReview, getReviews, deleteReview, updateReview, setTourUserIds, getReview } = require('../controllers/reviewController')
 
 const router = express.Router({ mergeParams: true })
 
@@ -18,6 +18,7 @@ router
     )
 
 router.route('/:id')
+    .get(getReview)
     .patch(updateReview)
     .delete(deleteReview)
 
